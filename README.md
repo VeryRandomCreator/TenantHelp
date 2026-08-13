@@ -4,7 +4,7 @@ This program aims to help prevent rental property damage fraud for both tenants 
 ## The Problem: Dishonesty in Property Damage
 The problem for both tenants and landlords is the potential for the other party to falsely claim damage was done during/outside of tenancy. While ordinary photos sent to the other party can act as a ceiling time for when the photo was taken, there is no system to prevent image doctoring, or grabbing older images found from other sources.
 </p>
-This app guarentees a ceiling time (through generating a bundle of signature, pdf, and certificate which the user can email to the other party), and a floor time (taking a photo in app and immediately signing the latest blockchain hash to it).
+This app guarentees a ceiling time (not after) (through generating a bundle of signature, pdf, and certificate which the user can email to the other party), and a floor time (taking a photo in-app and immediately signing the latest blockchain hash to it) (not before).
 
 ### Why Blockchain Hash?
 A pdf signed by a blockchain hash guarentees it was not generated before the claimed date. Mathematically, it is impossible to predict a future blockchain hash, meaning signing a pdf guarentees a timestamp floor. 

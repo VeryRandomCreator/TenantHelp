@@ -37,7 +37,7 @@
 
     </LinearLayout>
 
-    <!-- Photo display -->
+        <!-- Photo display -->
     <ImageView
         android:id="@+id/image_view_photo"
         android:layout_width="match_parent"

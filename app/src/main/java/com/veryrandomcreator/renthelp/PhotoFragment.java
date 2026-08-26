@@ -1,4 +1,4 @@
-package com.veryrandomcreator.tenanthelp;
+package com.veryrandomcreator.renthelp;
 
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -12,8 +12,6 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.PopupMenu;
 
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
@@ -22,9 +20,6 @@ import com.google.android.material.bottomsheet.BottomSheetDialogFragment;
 
 import android.net.Uri;
 
-import androidx.core.content.FileProvider;
-
-import java.io.File;
 import java.util.List;
 
 import android.graphics.BitmapFactory;
@@ -61,25 +56,6 @@ public class PhotoFragment extends BottomSheetDialogFragment {
     // True only when the user has taken a NEW photo in this session
     private boolean bitmapChanged = false;
 
-    // Register the contract to take a full-size picture
-    private final ActivityResultLauncher<Uri> takePictureLauncher = registerForActivityResult(
-            new ActivityResultContracts.TakePicture(),
-            success -> {
-                if (success) {
-                    try {
-                        // Decode the saved image from the temporary URI
-                        java.io.InputStream inputStream = requireContext().getContentResolver()
-                                .openInputStream(tempImageUri);
-                        currentBitmap = BitmapFactory.decodeStream(inputStream);
-                        imageViewPhoto.setImageBitmap(currentBitmap);
-                        bitmapChanged = true;
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                        Toast.makeText(requireContext(), "Failed to load captured image.", Toast.LENGTH_SHORT)
-                                .show();
-                    }
-                }
-            });
 
     public PhotoFragment() {
         // Required empty public constructor
@@ -114,31 +90,13 @@ public class PhotoFragment extends BottomSheetDialogFragment {
         buttonTakePhoto = view.findViewById(R.id.button_take_photo);
         buttonMoreOptions = view.findViewById(R.id.button_more_options);
 
-        buttonTakePhoto.setOnClickListener(v -> {
-            try {
-                // Create a temporary file in the cache directory
-                File tempFile = File.createTempFile("temp_image", ".jpg", requireContext().getCacheDir());
-
-                // Get the URI for the file using the FileProvider we configured
-                tempImageUri = FileProvider.getUriForFile(
-                        requireContext(),
-                        requireContext().getPackageName() + ".fileprovider",
-                        tempFile);
-
-                // Launch the camera app
-                takePictureLauncher.launch(tempImageUri);
-            } catch (Exception e) {
-                e.printStackTrace();
-                Toast.makeText(requireContext(), "Could not create temporary file for camera.", Toast.LENGTH_SHORT)
-                        .show();
-            }
-        });
-
-        String propertyId = null;
+        // Hide the "Take Photo" button since it's now handled by CameraFragment
+        buttonTakePhoto.setVisibility(View.GONE);
+        String inspectionId = null;
         if (getArguments() != null) {
-            propertyId = getArguments().getString("propertyId");
+            inspectionId = getArguments().getString("inspectionId");
         }
-        final String fPropertyId = propertyId;
+        final String fInspectionId = inspectionId;
 
         // If we are editing an existing item, load its data
         final boolean isEditing = getArguments() != null && getArguments().containsKey("itemId");
@@ -147,8 +105,8 @@ public class PhotoFragment extends BottomSheetDialogFragment {
         if (isEditing) {
             try {
                 // Find the matching text data from storage
-                List<PropertyImage> items = PhotoStorageManager.loadPropertyImageData(requireContext(), fPropertyId);
-                for (PropertyImage item : items) {
+                List<InspectionImage> items = PhotoStorageManager.loadInspectionImageData(requireContext(), fInspectionId);
+                for (InspectionImage item : items) {
                     if (item.getId().equals(itemId)) {
                         imageLabelEdt.setText(item.getLabel());
                         imageNotesEdt.setText(item.getNotes());
@@ -167,6 +125,17 @@ public class PhotoFragment extends BottomSheetDialogFragment {
                 e.printStackTrace();
                 Toast.makeText(requireContext(), "Failed to load existing photo data.", Toast.LENGTH_SHORT).show();
             }
+        } else if (getArguments() != null && getArguments().containsKey("tempPhotoUri")) {
+            try {
+                String uriString = getArguments().getString("tempPhotoUri");
+                Bitmap rawBitmap = BitmapFactory.decodeFile(uriString);
+                currentBitmap = rotateBitmapIfRequired(rawBitmap, uriString);
+                imageViewPhoto.setImageBitmap(currentBitmap);
+                bitmapChanged = true;
+            } catch (Exception e) {
+                e.printStackTrace();
+                Toast.makeText(requireContext(), "Failed to load secure capture.", Toast.LENGTH_SHORT).show();
+            }
         }
 
         // Set up the more_vert overflow menu
@@ -184,10 +153,10 @@ public class PhotoFragment extends BottomSheetDialogFragment {
             popup.setOnMenuItemClickListener(item -> {
                 int id = item.getItemId();
                 if (id == R.id.action_save) {
-                    savePhotoData(fPropertyId);
+                    savePhotoData(fInspectionId);
                     return true;
                 } else if (id == R.id.action_delete && isEditing) {
-                    deletePhotoData(fPropertyId, itemId);
+                    deletePhotoData(fInspectionId, itemId);
                     return true;
                 }
                 return false;
@@ -197,7 +166,7 @@ public class PhotoFragment extends BottomSheetDialogFragment {
         });
     }
 
-    private void savePhotoData(String propertyId) {
+    private void savePhotoData(String inspectionId) {
         String label = imageLabelEdt.getText().toString().trim();
         String notes = imageNotesEdt.getText().toString().trim();
 
@@ -242,21 +211,21 @@ public class PhotoFragment extends BottomSheetDialogFragment {
 
         if (editingId != null && !bitmapChanged) {
             // Text-only edit: skip the file write entirely
-            PhotoStorageManager.updatePhotoMetadataOnly(requireContext(), propertyId, editingId, label, notes, saveCallback);
+            PhotoStorageManager.updatePhotoMetadataOnly(requireContext(), inspectionId, editingId, label, notes, saveCallback);
         } else if (editingId != null) {
             // Existing item with a new photo taken
-            PhotoStorageManager.updatePhotoData(requireContext(), propertyId, editingId, label, notes, currentBitmap,
+            PhotoStorageManager.updatePhotoData(requireContext(), inspectionId, editingId, label, notes, currentBitmap,
                     saveCallback);
         } else {
             // Brand new item
-            PhotoStorageManager.savePhotoData(requireContext(), propertyId, label, notes, currentBitmap, saveCallback);
+            PhotoStorageManager.savePhotoData(requireContext(), inspectionId, label, notes, currentBitmap, saveCallback);
         }
     }
 
-    private void deletePhotoData(String propertyId, String itemId) {
+    private void deletePhotoData(String inspectionId, String itemId) {
         buttonMoreOptions.setEnabled(false);
 
-        PhotoStorageManager.deletePhotoData(requireContext(), propertyId, itemId,
+        PhotoStorageManager.deletePhotoData(requireContext(), inspectionId, itemId,
                 new PhotoStorageManager.SaveCallback() {
                     @Override
                     public void onSuccess(String id) {
@@ -282,5 +251,31 @@ public class PhotoFragment extends BottomSheetDialogFragment {
             dismissCallback.onPhotoDismissed();
         }
         dismiss();
+    }
+
+    private Bitmap rotateBitmapIfRequired(Bitmap img, String selectedImage) throws java.io.IOException {
+        android.media.ExifInterface ei = new android.media.ExifInterface(selectedImage);
+        int orientation = ei.getAttributeInt(android.media.ExifInterface.TAG_ORIENTATION, android.media.ExifInterface.ORIENTATION_NORMAL);
+
+        switch (orientation) {
+            case android.media.ExifInterface.ORIENTATION_ROTATE_90:
+                return rotateImage(img, 90);
+            case android.media.ExifInterface.ORIENTATION_ROTATE_180:
+                return rotateImage(img, 180);
+            case android.media.ExifInterface.ORIENTATION_ROTATE_270:
+                return rotateImage(img, 270);
+            default:
+                return img;
+        }
+    }
+
+    private Bitmap rotateImage(Bitmap img, int degree) {
+        android.graphics.Matrix matrix = new android.graphics.Matrix();
+        matrix.postRotate(degree);
+        Bitmap rotatedImg = Bitmap.createBitmap(img, 0, 0, img.getWidth(), img.getHeight(), matrix, true);
+        if (img != rotatedImg) {
+            img.recycle();
+        }
+        return rotatedImg;
     }
 }

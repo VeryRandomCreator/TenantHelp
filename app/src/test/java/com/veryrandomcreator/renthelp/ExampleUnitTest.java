@@ -1,4 +1,4 @@
-package com.veryrandomcreator.tenanthelp;
+package com.veryrandomcreator.renthelp;
 
 import org.junit.Test;
 

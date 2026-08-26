@@ -1,14 +1,9 @@
-package com.veryrandomcreator.tenanthelp;
+package com.veryrandomcreator.renthelp;
 
-public class PropertyImage {
+public class InspectionImage {
     private String id;
     private String label;
     private String notes;
-    private String latestHash;
-
-    public String getLatestHash() {
-        return latestHash;
-    }
 
     public String getId() {
         return id;
@@ -22,10 +17,9 @@ public class PropertyImage {
         return notes;
     }
 
-    public PropertyImage(String id, String label, String notes, String latestHash) {
+    public InspectionImage(String id, String label, String notes) {
         this.id = id;
         this.label = label;
         this.notes = notes;
-        this.latestHash = latestHash;
     }
 }

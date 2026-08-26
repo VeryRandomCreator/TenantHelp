@@ -8,10 +8,10 @@
     tools:context=".MainActivity">
 
     <TextView
-        android:id="@+id/text_view_my_properties"
+        android:id="@+id/text_view_my_inspections"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="My Properties"
+        android:text="My Inspections"
         android:textSize="24sp"
         android:textStyle="bold"
         android:padding="16dp"
@@ -20,21 +20,31 @@
         app:layout_constraintStart_toStartOf="parent" />
 
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recycler_view_properties"
+        android:id="@+id/recycler_view_inspections"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:clipToPadding="false"
         android:paddingBottom="80dp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/text_view_my_properties" />
+        app:layout_constraintTop_toBottomOf="@id/text_view_my_inspections" />
+
+    <!-- <Button
+        android:id="@+id/btn_test_network"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="16dp"
+        android:text="Test Network"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" /> -->
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/fab_add_property"
+        android:id="@+id/fab_add_inspection"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="16dp"
         android:layout_marginBottom="16dp"
-        android:contentDescription="Add Property"
+        android:contentDescription="Add Inspection"
         android:src="@android:drawable/ic_input_add"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />

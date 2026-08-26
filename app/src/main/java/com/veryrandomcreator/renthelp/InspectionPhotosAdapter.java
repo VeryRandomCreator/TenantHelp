@@ -1,4 +1,4 @@
-package com.veryrandomcreator.tenanthelp;
+package com.veryrandomcreator.renthelp;
 
 import android.view.LayoutInflater;
 import android.view.View;
@@ -10,15 +10,15 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.List;
 
-public class PropertyPhotosAdapter extends RecyclerView.Adapter<PropertyPhotosAdapter.PhotoViewHolder> {
+public class InspectionPhotosAdapter extends RecyclerView.Adapter<InspectionPhotosAdapter.PhotoViewHolder> {
     public interface OnItemClickListener {
-        void onItemClick(PropertyImage item);
+        void onItemClick(InspectionImage item);
     }
 
-    private final List<PropertyImage> photos;
+    private final List<InspectionImage> photos;
     private final OnItemClickListener listener;
 
-    public PropertyPhotosAdapter(List<PropertyImage> photos, OnItemClickListener listener) {
+    public InspectionPhotosAdapter(List<InspectionImage> photos, OnItemClickListener listener) {
         this.photos = photos;
         this.listener = listener;
     }
@@ -27,13 +27,13 @@ public class PropertyPhotosAdapter extends RecyclerView.Adapter<PropertyPhotosAd
     @Override
     public PhotoViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext())
-                .inflate(R.layout.item_property_photo, parent, false);
+                .inflate(R.layout.item_inspection_photo, parent, false);
         return new PhotoViewHolder(view);
     }
 
     @Override
     public void onBindViewHolder(@NonNull PhotoViewHolder holder, int position) {
-        PropertyImage item = photos.get(position);
+        InspectionImage item = photos.get(position);
         holder.bind(item, listener);
     }
 
@@ -52,7 +52,7 @@ public class PropertyPhotosAdapter extends RecyclerView.Adapter<PropertyPhotosAd
             notesTextView = itemView.findViewById(R.id.text_view_notes);
         }
 
-        public void bind(PropertyImage item, OnItemClickListener listener) {
+        public void bind(InspectionImage item, OnItemClickListener listener) {
             labelTextView.setText(item.getLabel());
             notesTextView.setText(item.getNotes());
             

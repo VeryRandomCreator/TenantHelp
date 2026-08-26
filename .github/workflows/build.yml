@@ -1,0 +1,50 @@
+name: Build Android APK
+
+# This triggers the build whenever you push to the main branch
+# or when you click the manual run button on GitHub
+on:
+  push:
+    branches: [ "main", "master" ]
+  workflow_dispatch: 
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: Set up Java SDK
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+
+    - name: Grant execute permission for Gradle wrapper
+      run: chmod +x gradlew
+
+    - name: Build Debug APK
+      run: ./gradlew assembleDebug
+
+    - name: Upload APK Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: rent-help-apk
+        path: app/build/outputs/apk/debug/app-debug.apk
+    - name: Print Signature Hash
+      run: |
+        echo "------------------------------------------------------------"
+        echo "SEARCHING FOR KEYSTORE AND EXTRACTING SHA-256..."
+        # This finds the keystore regardless of exactly where it was generated
+        KEYSTORE_PATH=$(find ~ -name "debug.keystore" | head -n 1)
+        
+        if [ -z "$KEYSTORE_PATH" ]; then
+          echo "ERROR: debug.keystore not found. Check if build failed above."
+          exit 1
+        fi
+        
+        echo "Found keystore at: $KEYSTORE_PATH"
+        # Extract the SHA256 and clean up the output
+        keytool -list -v -keystore "$KEYSTORE_PATH" -alias androiddebugkey -storepass android -keypass android | grep "SHA256:" | sed 's/^[[:space:]]*//'
+        echo "------------------------------------------------------------"

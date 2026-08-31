@@ -1,11 +1,12 @@
 name: Build Android APK
 
-# This triggers the build whenever you push to the main branch
-# or when you click the manual run button on GitHub
 on:
   push:
     branches: [ "main", "master" ]
   workflow_dispatch: 
+
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -24,27 +25,43 @@ jobs:
     - name: Grant execute permission for Gradle wrapper
       run: chmod +x gradlew
 
-    - name: Build Debug APK
-      run: ./gradlew assembleDebug
+    # 1. Build PROD APK (Outputs an unsigned APK)
+    - name: Build Release APK
+      run: ./gradlew assembleRelease
 
+    # 2. Securely sign the APK
+    - name: Sign APK
+      uses: r0adkll/sign-android-release@v1
+      id: sign_app
+      with:
+        releaseDirectory: app/build/outputs/apk/release
+        signingKeyBase64: ${{ secrets.KEYSTORE_BASE64 }}
+        alias: ${{ secrets.KEY_ALIAS }}
+        keyStorePassword: ${{ secrets.KEYSTORE_PASSWORD }}
+        keyPassword: ${{ secrets.KEY_PASSWORD }}
+
+    # 3. Print the Signature Hash of the now-signed APK
+    - name: Print App Signature Hash
+      run: |
+        echo "------------------------------------------------------------"
+        echo "Extracting signing certificate SHA-256..."
+        # The signing step outputs the exact path of the signed file
+        keytool -printcert -jarfile "${{ steps.sign_app.outputs.signedReleaseFile }}" | grep "SHA256:" | sed 's/^[[:space:]]*//'
+        echo "------------------------------------------------------------"
+
+    # 4. Upload Signed Artifact
     - name: Upload APK Artifact
       uses: actions/upload-artifact@v4
       with:
-        name: rent-help-apk
-        path: app/build/outputs/apk/debug/app-debug.apk
-    - name: Print Signature Hash
-      run: |
-        echo "------------------------------------------------------------"
-        echo "SEARCHING FOR KEYSTORE AND EXTRACTING SHA-256..."
-        # This finds the keystore regardless of exactly where it was generated
-        KEYSTORE_PATH=$(find ~ -name "debug.keystore" | head -n 1)
-        
-        if [ -z "$KEYSTORE_PATH" ]; then
-          echo "ERROR: debug.keystore not found. Check if build failed above."
-          exit 1
-        fi
-        
-        echo "Found keystore at: $KEYSTORE_PATH"
-        # Extract the SHA256 and clean up the output
-        keytool -list -v -keystore "$KEYSTORE_PATH" -alias androiddebugkey -storepass android -keypass android | grep "SHA256:" | sed 's/^[[:space:]]*//'
-        echo "------------------------------------------------------------"
+        name: rent-help-apk-release
+        path: ${{ steps.sign_app.outputs.signedReleaseFile }}
+
+    # 5. Stage the Release
+    - name: Stage Draft Release
+      uses: softprops/action-gh-release@v2
+      with:
+        files: ${{ steps.sign_app.outputs.signedReleaseFile }}
+        name: Staged Release ${{ github.run_number }}
+        tag_name: build-${{ github.run_number }}
+        draft: true 
+        generate_release_notes: true

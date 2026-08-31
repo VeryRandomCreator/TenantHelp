@@ -39,6 +39,7 @@ jobs:
         alias: ${{ secrets.KEY_ALIAS }}
         keyStorePassword: ${{ secrets.KEYSTORE_PASSWORD }}
         keyPassword: ${{ secrets.KEY_PASSWORD }}
+        buildToolsVersion: 34.0.0 # Add this line to use modern build tools
 
     # 3. Print the Signature Hash of the now-signed APK
     - name: Print App Signature Hash
